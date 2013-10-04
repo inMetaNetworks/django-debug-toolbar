@@ -115,13 +115,31 @@ class TemplateDebugPanel(DebugPanel):
 
     def process_response(self, request, response):
 
-        standard_processors = ('django.contrib.auth.context_processors.auth',
-                               'django.core.context_processors.debug',
-                               'django.core.context_processors.i18n',
-                               'django.core.context_processors.media',
-                               'django.core.context_processors.static',
-                               'django.core.context_processors.tz',
-                               'django.contrib.messages.context_processors.messages')
+        processors = []
+        collect = ['django.core.context_processors.csrf',
+                'django.contrib.auth.context_processors.auth',
+                'django.core.context_processors.debug',
+                'django.core.context_processors.i18n',
+                'django.core.context_processors.media',
+                'django.core.context_processors.static',
+                'django.core.context_processors.tz',
+                'django.contrib.messages.context_processors.messages']
+        for path in collect:
+            i = path.rfind('.')
+            module, attr = path[:i], path[i+1:]
+            try:
+                mod = import_module(module)
+            except ImportError, e:
+                raise ImproperlyConfigured('Error importing request processor module %s: "%s"' % (module, e))
+            try:
+                func = getattr(mod, attr)
+            except AttributeError:
+                raise ImproperlyConfigured('Module "%s" does not define a "%s" callable request processor' % (module, attr))
+            processors.append(func)
+
+        standard_processors = tuple(processors)
+
+
 
         context_processors = dict(
             [

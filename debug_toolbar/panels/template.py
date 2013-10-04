@@ -3,12 +3,13 @@ from pprint import pformat
 
 from django import http
 from django.conf import settings
-from django.template.context import get_standard_processors
 from django.test.signals import template_rendered
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.query import QuerySet, RawQuerySet
 from debug_toolbar.panels import DebugPanel
 from debug_toolbar.utils.tracking.db import recording, SQLQueryTriggered
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.importlib import import_module
 
 # Code taken and adapted from Simon Willison and Django Snippets:
 # http://www.djangosnippets.org/snippets/766/
@@ -117,16 +118,16 @@ class TemplateDebugPanel(DebugPanel):
 
         processors = []
         collect = ['django.core.context_processors.csrf',
-                'django.contrib.auth.context_processors.auth',
-                'django.core.context_processors.debug',
-                'django.core.context_processors.i18n',
-                'django.core.context_processors.media',
-                'django.core.context_processors.static',
-                'django.core.context_processors.tz',
-                'django.contrib.messages.context_processors.messages']
+                   'django.contrib.auth.context_processors.auth',
+                   'django.core.context_processors.debug',
+                   'django.core.context_processors.i18n',
+                   'django.core.context_processors.media',
+                   'django.core.context_processors.static',
+                   'django.core.context_processors.tz',
+                   'django.contrib.messages.context_processors.messages']
         for path in collect:
             i = path.rfind('.')
-            module, attr = path[:i], path[i+1:]
+            module, attr = path[:i], path[i + 1:]
             try:
                 mod = import_module(module)
             except ImportError, e:
@@ -138,8 +139,6 @@ class TemplateDebugPanel(DebugPanel):
             processors.append(func)
 
         standard_processors = tuple(processors)
-
-
 
         context_processors = dict(
             [

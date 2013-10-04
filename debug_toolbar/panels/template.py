@@ -77,8 +77,10 @@ class TemplateDebugPanel(DebugPanel):
                         temp_layer[key] = '<<languages>>'
                     # QuerySet would trigger the database: user can run the query from SQL Panel
                     elif isinstance(value, (QuerySet, RawQuerySet)):
-                        model_name = "%s.%s" % (value.model._meta.app_label, value.model.__name__)
-                        temp_layer[key] = '<<%s of %s>>' % (value.__class__.__name__.lower(), model_name)
+                        model_name = "%s.%s" % (
+                            value.model._meta.app_label, value.model.__name__)
+                        temp_layer[key] = '<<%s of %s>>' % (
+                            value.__class__.__name__.lower(), model_name)
                     else:
                         try:
                             recording(False)
@@ -112,10 +114,19 @@ class TemplateDebugPanel(DebugPanel):
         self.request = request
 
     def process_response(self, request, response):
+
+        standard_processors = ('django.contrib.auth.context_processors.auth',
+                               'django.core.context_processors.debug',
+                               'django.core.context_processors.i18n',
+                               'django.core.context_processors.media',
+                               'django.core.context_processors.static',
+                               'django.core.context_processors.tz',
+                               'django.contrib.messages.context_processors.messages')
+
         context_processors = dict(
             [
                 ("%s.%s" % (k.__module__, k.__name__),
-                    pformat(k(self.request))) for k in get_standard_processors()
+                    pformat(k(self.request))) for k in standard_processors
             ]
         )
         template_context = []
